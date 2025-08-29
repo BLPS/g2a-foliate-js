@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  foliate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: foliate
+    ports:
+      - "8188:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro

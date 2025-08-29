@@ -124,6 +124,9 @@ class Reader {
         $('#nav-bar').style.visibility = 'visible'
         $('#left-button').addEventListener('click', () => this.view.goLeft())
         $('#right-button').addEventListener('click', () => this.view.goRight())
+        $('#player-buttons .play').addEventListener('click', () => this.view.playMedia())
+        $('#player-buttons .pause').addEventListener('click', () => this.view.pauseMedia())
+        $('#player-buttons .stop').addEventListener('click', () => this.view.stopMedia())
 
         const slider = $('#progress-slider')
         slider.dir = book.dir
