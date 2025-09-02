@@ -293,23 +293,46 @@ export class View extends HTMLElement {
                                 doc = content[(content.length - 1)].doc
                             }
                             const el = resolved.anchor(doc)
-                            // console.log(content)
-                            // console.log('resolved.index', resolved.index)
-                            // console.log('el', el)
                             if(el) {
                                 el.classList.add(activeClass)
                                 lastActive = new WeakRef(el)
+                                if (playbackActiveClass)
+                                    el.ownerDocument.documentElement.classList.add(playbackActiveClass)
                             }
                         }
                     })
             })
-            this.mediaOverlay.addEventListener('unhighlight', () => {
-                const el = lastActive?.deref()
-                if (el) {
-                    el.classList.remove(activeClass)
-                    if (playbackActiveClass) el.ownerDocument
-                        .documentElement.classList.remove(playbackActiveClass)
-                }
+            this.mediaOverlay.addEventListener('unhighlight', (e) => {
+                const resolved = this.resolveNavigation(e.detail.text)
+                this.renderer.goTo(resolved)
+                    .then(() => {
+
+                        const content = this.renderer.getContents()
+                        if(content) {
+                            let doc = null
+                            for(let doc_el of content) {
+                                if(doc_el && doc_el.index === resolved.index) {
+                                    doc = doc_el.doc
+                                }
+                            }
+                            if(!doc) {
+                                doc = content[(content.length - 1)].doc
+                            }
+                            const el = resolved.anchor(doc)
+                            if(el) {
+                                el.classList.remove(activeClass)
+                                if (playbackActiveClass)
+                                    el.ownerDocument.documentElement.classList.remove(playbackActiveClass)
+                            }
+                        }
+                    })
+
+                // const el = lastActive?.deref()
+                // if (el) {
+                //     el.classList.remove(activeClass)
+                //     if (playbackActiveClass) el.ownerDocument
+                //         .documentElement.classList.remove(playbackActiveClass)
+                // }
             })
 
             document.getElementById('player-buttons').style.visibility = 'visible'
@@ -483,6 +506,7 @@ export class View extends HTMLElement {
         }
     }
     async goTo(target) {
+        console.log(`goTo: ${target}`)
         const resolved = this.resolveNavigation(target)
         try {
             await this.renderer.goTo(resolved)
@@ -613,23 +637,20 @@ export class View extends HTMLElement {
     }
 
     playMedia() {
-        console.log('Play Media', this.renderer.index)
         return this.mediaOverlay.start(this.renderer.index)
     }
 
     pauseMedia() {
-        console.log('Pause Media')
         return this.mediaOverlay.pause()
     }
 
     stopMedia() {
-        console.log('Stop Media')
-        return this.mediaOverlay.pause()
+        return this.mediaOverlay.stop()
     }
 
     startMediaOverlay() {
-        // const { index } = this.renderer.getContents()[0]
-        // return this.mediaOverlay.start(index)
+        const { index } = this.renderer.getContents()[0]
+        return this.mediaOverlay.start(index)
     }
 }
 

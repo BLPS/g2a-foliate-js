@@ -440,15 +440,21 @@ class MediaOverlay extends EventTarget {
     #highlight() {
         this.dispatchEvent(new CustomEvent('highlight', { detail: this.#activeItem }))
     }
-    #unhighlight() {
-        this.dispatchEvent(new CustomEvent('unhighlight', { detail: this.#activeItem }))
+    #unhighlight(activeItem) {
+        this.dispatchEvent(new CustomEvent('unhighlight', { detail: activeItem !== undefined && activeItem !== null ? activeItem : this.#activeItem }))
     }
     async #play(audioIndex, itemIndex) {
+        if (this.#state === 'paused' && this.#audio) {
+            // this.#highlight()
+            this.resume()
+            return
+        }
         this.#stop()
         this.#audioIndex = audioIndex
         this.#itemIndex = itemIndex
         const src = this.#activeAudio?.src
         if (!src || !this.#activeItem) return this.start(this.#sectionIndex + 1)
+        this.#highlight()
 
         const url = URL.createObjectURL(await this.book.loadBlob(src))
         const audio = new Audio(url)
@@ -466,24 +472,31 @@ class MediaOverlay extends EventTarget {
                     return
                 }
             }
-            const oldIndex = this.#itemIndex
-            while (items[this.#itemIndex + 1]?.begin <= t) this.#itemIndex++
-            if (this.#itemIndex !== oldIndex) this.#highlight()
+            const activeItems = []
+            while (items[this.#itemIndex + 1]?.begin <= t) {
+                activeItems.push(this.#activeAudio?.items?.[this.#itemIndex])
+                this.#itemIndex++
+                this.#highlight()
+            }
+            setTimeout(() => {
+                if(activeItems.length > 0) {
+                    for (const activeItem of activeItems) {
+                        this.#unhighlight(activeItem)
+                    }
+                }
+            }, 150)
         })
         audio.addEventListener('error', () =>
             this.#error(new Error(`Failed to load ${src}`)))
-        audio.addEventListener('playing', () => this.#highlight())
+        // audio.addEventListener('playing', () => this.#highlight())
         audio.addEventListener('ended', () => {
             this.#unhighlight()
             URL.revokeObjectURL(url)
             this.#audio = null
             this.#play(audioIndex + 1, 0).catch(e => this.#error(e))
         })
-        if (this.#state === 'paused') {
-            this.#highlight()
-            audio.currentTime = this.#activeItem.begin ?? 0
-        }
-        else audio.addEventListener('canplaythrough', () => {
+
+        audio.addEventListener('canplaythrough', () => {
             let start = this.#activeItem.begin ?? 0
             if(audio.duration > 0 && !audio.paused){
                 audio.pause();
@@ -525,14 +538,16 @@ class MediaOverlay extends EventTarget {
     }
     #stop() {
         if (this.#audio) {
+            this.#state = 'stopped'
             this.#audio.pause()
             URL.revokeObjectURL(this.#audio.src)
             this.#audio = null
             this.#unhighlight()
+        } else {
+            this.#state = null
         }
     }
     stop() {
-        this.#state = 'stopped'
         this.#stop()
     }
     prev() {
@@ -742,7 +757,6 @@ class Loader {
         const childList = this.#children.get(parent)
         if (!childList?.includes(href)) {
             this.#refCount.set(href, this.#refCount.get(href) + 1)
-            //console.log(`referencing ${href}, now ${this.#refCount.get(href)}`)
             if (childList) childList.push(href)
             else this.#children.set(parent, [href])
         }
@@ -751,9 +765,7 @@ class Loader {
     unref(href) {
         if (!this.#refCount.has(href)) return
         const count = this.#refCount.get(href) - 1
-        //console.log(`unreferencing ${href}, now ${count}`)
         if (count < 1) {
-            //console.log(`unloading ${href}`)
             URL.revokeObjectURL(this.#cache.get(href))
             this.#cache.delete(href)
             this.#refCount.delete(href)

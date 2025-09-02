@@ -246,8 +246,32 @@ export class FixedLayout extends HTMLElement {
     }
     get index() {
         const spread = this.#spreads[this.#index]
-        const section = spread?.center ?? (this.#side === 'left'
-            ? spread.left ?? spread.right : spread.right ?? spread.left)
+        // const section = spread?.center ?? (this.#side === 'left' ? spread.left ?? spread.right : spread.right ?? spread.left)
+
+        let section;
+
+        if (spread && spread.center !== null && spread.center !== undefined) {
+            section = spread.center;
+        } else {
+            if (this.#side === 'left') {
+                if (spread && spread.left !== null && spread.left !== undefined) {
+                    section = spread.left;
+                } else if (spread && spread.right !== null && spread.right !== undefined) {
+                    section = spread.right;
+                } else {
+                    section = undefined;
+                }
+            } else {
+                if (spread && spread.right !== null && spread.right !== undefined) {
+                    section = spread.right;
+                } else if (spread && spread.left !== null && spread.left !== undefined) {
+                    section = spread.left;
+                } else {
+                    section = undefined;
+                }
+            }
+        }
+
         return this.book.sections.indexOf(section)
     }
     #reportLocation(reason) {
@@ -262,6 +286,9 @@ export class FixedLayout extends HTMLElement {
             if (right === section) return { index, side: 'right' }
             if (center === section) return { index, side: 'center' }
         }
+    }
+    getSpreads() {
+        return this.#spreads
     }
     async goToSpread(index, side, reason) {
         if (index < 0 || index > this.#spreads.length - 1) return

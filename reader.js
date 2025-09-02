@@ -110,15 +110,16 @@ class Reader {
         this.view.addEventListener('load', this.#onLoad.bind(this))
         this.view.addEventListener('relocate', this.#onRelocate.bind(this))
 
-        const { book } = this.view
+        const { book, renderer } = this.view
+
         book.transformTarget?.addEventListener('data', ({ detail }) => {
             detail.data = Promise.resolve(detail.data).catch(e => {
                 console.error(new Error(`Failed to load ${detail.name}`, { cause: e }))
                 return ''
             })
         })
-        this.view.renderer.setStyles?.(getCSS(this.style))
-        this.view.renderer.next()
+        renderer.setStyles?.(getCSS(this.style))
+        renderer.next()
 
         $('#header-bar').style.visibility = 'visible'
         $('#nav-bar').style.visibility = 'visible'
@@ -128,13 +129,32 @@ class Reader {
         $('#player-buttons .pause').addEventListener('click', () => this.view.pauseMedia())
         $('#player-buttons .stop').addEventListener('click', () => this.view.stopMedia())
 
+        const spreads = renderer.getSpreads()
+        const spreadIndexPrice = 100 / (spreads.length - 1)
+
         const slider = $('#progress-slider')
         slider.dir = book.dir
-        slider.addEventListener('input', e =>
-            this.view.goToFraction(parseFloat(e.target.value)))
-        for (const fraction of this.view.getSectionFractions()) {
+        slider.addEventListener('input', e => {
+            const currentPrice = parseFloat(e.target.value)
+            const closestIndex = Math.round(currentPrice / (spreadIndexPrice / 100))
+            const side = Object.keys(spreads[closestIndex])[0];
+
+            slider.value = (closestIndex * spreadIndexPrice) / 100
+
+            this.view.stopMedia()
+            renderer.goToSpread(closestIndex, side)
+            // this.view.goToFraction(parseFloat(e.target.value))
+        })
+
+        for (const spreadIndex in spreads) {
             const option = document.createElement('option')
-            option.value = fraction
+            if(spreadIndex > 0) {
+                const nextIndex = parseInt(spreadIndex)
+                const stepPrice = (nextIndex * spreadIndexPrice) / 100
+                option.value = stepPrice.toString()
+            } else {
+                option.value = spreadIndex
+            }
             $('#tick-marks').append(option)
         }
 
@@ -198,14 +218,22 @@ class Reader {
         doc.addEventListener('keydown', this.#handleKeydown.bind(this))
     }
     #onRelocate({ detail }) {
-        const { fraction, location, tocItem, pageItem } = detail
+        const { fraction, location, tocItem, pageItem, section } = detail
+
+        const bookSection = this.view.book.sections[section.current]
+        const spread = this.view.renderer.getSpreadOf(bookSection)
+
+        const spreads = this.view.renderer.getSpreads()
+        const spreadIndexPrice = 100 / (spreads.length - 1)
+        const stepPrice = (spread.index * spreadIndexPrice) / 100
+
         const percent = percentFormat.format(fraction)
         const loc = pageItem
             ? `Page ${pageItem.label}`
             : `Loc ${location.current}`
         const slider = $('#progress-slider')
         slider.style.visibility = 'visible'
-        slider.value = fraction
+        slider.value = stepPrice
         slider.title = `${percent} · ${loc}`
         if (tocItem?.href) this.#tocView?.setCurrentHref?.(tocItem.href)
     }
