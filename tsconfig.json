@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    // --- Project Structure & Module Resolution ---
+    "target": "ESNext", // Compile to the latest JavaScript version.
+    "module": "ESNext", // Use modern ES modules.
+    "moduleResolution": "bundler", // Essential for Vite; resolves modules like a bundler.
+    "baseUrl": ".", // Sets the project root as the base directory.
+
+    // --- JavaScript & TypeScript Interoperability ---
+    "allowJs": true, // Allow TypeScript to process JavaScript files.
+    "checkJs": false, // Do not type-check JS files directly; use .d.ts files for types.
+    "esModuleInterop": true, // Improves compatibility between different module types.
+    "isolatedModules": true, // Required by Vite for performance.
+
+    // --- Type Checking Strictness & Output ---
+    "strict": true, // Enable all strict type-checking options (Best Practice).
+    "noEmit": true, // Do not generate output files; Vite handles building.
+    "skipLibCheck": true // Skip type checking of declaration files from dependencies.
+  },
+  "include": [
+    "**/*.js", // Scan all .js files in the project for modules.
+    "declarations.d.ts" // Include your global type declarations.
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "rollup"
+  ]
+}
