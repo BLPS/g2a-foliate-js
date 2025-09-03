@@ -1,6 +1,6 @@
 {
   "name": "foliate-js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Render e-books in the browser",
   "repository": {
     "type": "git",
@@ -10,7 +10,6 @@
   "author": "John Factotum",
   "license": "MIT",
   "type": "module",
-  "types": "./declarations.d.ts",
   "exports": {
     "./*.js": "./*.js"
   },
