@@ -537,10 +537,10 @@ class MediaOverlay extends EventTarget {
         this.#audio?.play().catch(e => this.#error(e))
     }
     #stop() {
+        console.log('stop action')
         if (this.#audio) {
-            this.#state = null
-            // this.#state = 'stopped'
-            // this.#audio.pause()
+            this.#audio.pause()
+            this.#state = 'stopped'
             URL.revokeObjectURL(this.#audio.src)
             this.#audio = null
             this.#unhighlight()
