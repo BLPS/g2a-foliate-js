@@ -337,9 +337,9 @@ export class View extends HTMLElement {
 
             document.getElementById('player-buttons').style.visibility = 'visible'
 
-            setTimeout(() => {
-                this.startMediaOverlay();
-            }, 1000);
+            // setTimeout(() => {
+            //     this.startMediaOverlay();
+            // }, 1000);
         }
     }
     close() {
