@@ -121,16 +121,38 @@ class Reader {
         renderer.setStyles?.(getCSS(this.style))
         renderer.next()
 
+        const spreads = renderer.getSpreads()
+        const spreadIndexPrice = 100 / (spreads.length - 1)
+
         $('#header-bar').style.visibility = 'visible'
         $('#nav-bar').style.visibility = 'visible'
-        $('#left-button').addEventListener('click', () => this.view.goLeft())
-        $('#right-button').addEventListener('click', () => this.view.goRight())
+        $('#left-button').addEventListener('click', () => {
+            this.view.stopMedia()
+            const section = book.sections[renderer.index]
+            const spread = renderer.getSpreadOf(section)
+            const spreadIndex = spread.index - 1
+            if(!spreads[spreadIndex]) { return false;}
+            const side = Object.keys(spreads[spreadIndex])[0];
+            setTimeout(() => {
+                renderer.goToSpread(spreadIndex, side)
+            }, 100)
+            return false;
+        })
+        $('#right-button').addEventListener('click', () => {
+            this.view.stopMedia()
+            const section = book.sections[renderer.index]
+            const spread = renderer.getSpreadOf(section)
+            const spreadIndex = spread.index + 1
+            if(!spreads[spreadIndex]) { return false;}
+            const side = Object.keys(spreads[spreadIndex])[0];
+            setTimeout(() => {
+                renderer.goToSpread(spreadIndex, side)
+            }, 100)
+            return false;
+        })
         $('#player-buttons .play').addEventListener('click', () => this.view.playMedia())
         $('#player-buttons .pause').addEventListener('click', () => this.view.pauseMedia())
         $('#player-buttons .stop').addEventListener('click', () => this.view.stopMedia())
-
-        const spreads = renderer.getSpreads()
-        const spreadIndexPrice = 100 / (spreads.length - 1)
 
         const slider = $('#progress-slider')
         slider.dir = book.dir
