@@ -537,7 +537,6 @@ class MediaOverlay extends EventTarget {
         this.#audio?.play().catch(e => this.#error(e))
     }
     #stop() {
-        console.log('stop action')
         if (this.#audio) {
             this.#audio.pause()
             this.#state = 'stopped'
